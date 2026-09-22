@@ -13,7 +13,7 @@ Features:
 - ✅ Filter inventory to a single known tag - the basis of the warmer/colder use case
 - ✅ Read / write tag memory (reserved, EPC, TID and user banks)
 - ✅ Write a new EPC number to a tag
-- ✅ Configure RF power, frequency band, inventory time, baud rate and device address
+- ✅ Configure RF power, RF link profile, frequency band, inventory time, baud rate and device address
 - ✅ Control the buzzer/LED output and GPIO pins
 - ✅ Read reader info and serial number (handy as a communication self-check)
 - ✅ Streaming "fast inventory" mode, extended reader parameters, per-antenna RF power and region readback

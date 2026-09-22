@@ -506,6 +506,39 @@ class UHFReader:
         value = power | (0x00 if persist else 0x80)
         return self._call(_CMD_SET_RF_POWER, bytes([value]), timeout_ms)
 
+    def reader_profile(self, profile=None, save=True, timeout_ms=None):
+        """Load or modify the reader's internal RF link profile
+        (command 0x7f, Format 1). Manual 8.4.31.
+
+        The profile controls the underlying Tari/link-frequency/
+        encoding used on the air interface - see the manual's
+        "Configuration of different profiles" tables for the available
+        numbers, which are chipset-dependent (0-3 on R2000-based
+        readers, various numbers including 13 on Ex10-based readers).
+        Unlike most other settings this persists across power-down by
+        default even on R2000 readers; `save` only affects that
+        behaviour on Ex10 readers ("Power Down Save Flag").
+
+        profile: target profile number (0-63) to switch to, or None
+            (default) to just read back the current profile without
+            changing it.
+        save: when profile is not None, whether the new profile should
+            persist across power-down (Ex10 readers only - ignored on
+            R2000-based readers, which always persist).
+
+        Returns the profile number the reader reports.
+        """
+        if profile is None:
+            value = 0x00  # bit7=0 -> load (read) current profile
+        else:
+            if not (0 <= profile <= 0x3F):
+                raise ValueError("profile must be 0-63")
+            value = 0x80 | profile  # bit7=1 -> modify
+            if not save:
+                value |= 0x40  # bit6=1 -> do not save (Ex10 only)
+        data = self._call(_CMD_READER_PROFILE, bytes([value]), timeout_ms)
+        return data[0] & 0x7F
+
     def set_frequency(self, band, max_channel, min_channel, persist=True, timeout_ms=None):
         """Configure the RF frequency band and channel range (command
         0x22, format 2). `band` is a code from FREQUENCY_BANDS (or a
@@ -997,12 +1030,6 @@ class UHFReader:
         self._not_implemented(
             "get_tag_custom_password", _CMD_GET_TAG_CUSTOM_PASSWORD
         )
-
-    def reader_profile(self, *args, **kwargs):
-        """Load/modify the reader's air-interface profile (see the
-        Profile table in the Application Manual). Manual 8.4.31,
-        command 0x7f."""
-        self._not_implemented("reader_profile", _CMD_READER_PROFILE)
 
     def sync_em4325_timestamp(self, *args, **kwargs):
         """Synchronise the RTC of an EM4325 sensor tag. Manual 8.4.32,
