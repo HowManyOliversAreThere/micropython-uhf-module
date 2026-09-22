@@ -18,7 +18,7 @@ UART_ID = 1
 TX_PIN = 17
 RX_PIN = 16
 
-uart = UART(UART_ID, baudrate=57600, tx=TX_PIN, rx=RX_PIN, timeout=50, timeout_char=10)
+uart = UART(UART_ID, baudrate=115200, tx=TX_PIN, rx=RX_PIN, timeout=50, timeout_char=10)
 reader = UHFReader(uart)
 
 # Allow time for the module to finish its power-on initialisation.

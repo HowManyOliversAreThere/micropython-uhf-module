@@ -24,7 +24,7 @@ RX_PIN = 16
 # 0-30 bytes). Pad/trim to match your tag population's EPC length.
 NEW_EPC_HEX = "C0FFEECAFE2026"
 
-uart = UART(UART_ID, baudrate=57600, tx=TX_PIN, rx=RX_PIN, timeout=50, timeout_char=10)
+uart = UART(UART_ID, baudrate=115200, tx=TX_PIN, rx=RX_PIN, timeout=50, timeout_char=10)
 reader = UHFReader(uart)
 
 # Allow time for the module to finish its power-on initialisation.

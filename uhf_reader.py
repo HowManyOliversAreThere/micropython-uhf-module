@@ -16,7 +16,11 @@ setup_antenna()) - patches welcome.
 Physical layer reminder (see your module's datasheet - values below are
 the TY928's):
     - UART, 1 start bit, 8 data bits, 1 stop bit, no parity.
-    - Default baud rate 57600bps.
+    - Factory-default baud rate 57600bps - but set_baud_rate() persists
+      across power-down, and received modules have been found to be
+      running at 115200bps, so a given module may already be running at
+      a different rate. Confirm the module's actual current baud (e.g.
+      with ping()) before assuming the factory default.
     - Module needs ~140ms after power-up/EN before it will respond.
     - Gaps between consecutive bytes (in either direction) longer than
       15ms are treated by the module as a broken frame.
@@ -285,7 +289,7 @@ class UHFReader:
         from machine import UART
         from uhf_reader import UHFReader
 
-        uart = UART(1, baudrate=57600, tx=17, rx=16, timeout=50, timeout_char=10)
+        uart = UART(1, baudrate=115200, tx=17, rx=16, timeout=50, timeout_char=10)
         reader = UHFReader(uart)
         info = reader.get_reader_info()
     """

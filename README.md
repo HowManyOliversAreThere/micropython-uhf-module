@@ -25,7 +25,7 @@ Features:
 from machine import UART
 from uhf_reader import UHFReader
 
-uart = UART(1, baudrate=57600, tx=17, rx=16, timeout=50, timeout_char=10)
+uart = UART(1, baudrate=115200, tx=17, rx=16, timeout=50, timeout_char=10)
 reader = UHFReader(uart)
 
 print(reader.get_reader_info())
@@ -44,5 +44,5 @@ See the `examples` folder for a basic communication check and an EPC-write examp
 
 - **Set the correct frequency band and channel range for your jurisdiction** with `set_frequency()` before keying up RF at any meaningful power - see the docstring and `FREQUENCY_BANDS` in `uhf_reader.py`. This driver does not validate RF-legality for you.
 - **Always have an antenna connected to the IPEX connector before transmitting** - running the PA into an open circuit for extended periods risks damaging the module.
-- Default UART settings are 57600bps, 8N1. The protocol requires the gap between consecutive bytes to stay under 15ms - if your port's `UART` constructor supports a `timeout_char` argument, set it comfortably below that.
+- Factory-default UART settings are 57600bps, 8N1 - but `set_baud_rate()` persists across power-down, so a module may already be running at a different rate (115200bps for the module this repo's examples target; confirm yours with `ping()` before assuming the factory default). The protocol requires the gap between consecutive bytes to stay under 15ms - if your port's `UART` constructor supports a `timeout_char` argument, set it comfortably below that.
 - Allow ~140ms after power-up/`EN` before the module will respond to commands.
