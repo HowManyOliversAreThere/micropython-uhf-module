@@ -304,6 +304,8 @@ class UHFReader:
     # -- low level framing ---------------------------------------------
 
     def _send(self, cmd, data=b""):
+        # TODO: Check whether this stale buffer clear is necessary
+        self._uart.read()
         body = bytes([len(data) + 4, self.address, cmd]) + bytes(data)
         crc = _crc16(body)
         self._uart.write(body + bytes([crc & 0xFF, (crc >> 8) & 0xFF]))
