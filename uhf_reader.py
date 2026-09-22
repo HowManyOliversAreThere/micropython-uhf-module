@@ -412,6 +412,11 @@ class UHFReader:
 
     @staticmethod
     def _parse_tag_record(data, offset):
+        # Confirmed against the manual (section 8.2.1 / "Detail
+        # structure of EPC ID", p.23): when FastID is enabled, n below
+        # is the TOTAL length of EPC+TID combined ("Total length of EPC
+        # plus TID"), not the EPC length alone - the last 12 bytes of
+        # that combined block are TID, the rest is EPC.
         header = data[offset]
         has_tid = bool(header & 0x80)  # Impinj FastID: EPC+TID combined
         has_phase = bool(header & 0x40)
