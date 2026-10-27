@@ -939,22 +939,33 @@ class UHFReader:
         Manual 8.4.8, command 0x3f."""
         self._not_implemented("setup_antenna", _CMD_SETUP_ANTENNA)
 
-    def set_antenna_check(self, *args, **kwargs):
-        """Enable/disable antenna connection checking before tag
-        operations. Manual 8.4.14, command 0x66."""
-        self._not_implemented("set_antenna_check", _CMD_SET_ANTENNA_CHECK)
+    def set_antenna_check(self, enabled, timeout_ms=None):
+        """Enable/disable the antenna check (command 0x66). With it on,
+        tag operations fail with STATUS_ANTENNA_CHECK_FAILURE (0xF8)
+        when the antenna's return loss is below the threshold (see
+        antenna_return_loss_threshold()) - the module's protection
+        against transmitting into a missing or badly matched antenna.
+        Leave it on. Manual 8.4.14."""
+        self._call(_CMD_SET_ANTENNA_CHECK, bytes([0x01 if enabled else 0x00]), timeout_ms)
 
     def set_comm_interface(self, *args, **kwargs):
         """Switch between USB and UART communication (needs a
         power-cycle to take effect). Manual 8.4.15, command 0x6a."""
         self._not_implemented("set_comm_interface", _CMD_SET_COMM_INTERFACE)
 
-    def set_antenna_return_loss(self, *args, **kwargs):
-        """Modify/load the antenna return-loss threshold used by the
-        antenna check. Manual 8.4.16, command 0x6e."""
-        self._not_implemented(
-            "set_antenna_return_loss", _CMD_SET_ANTENNA_RETURN_LOSS
-        )
+    def antenna_return_loss_threshold(self, threshold_db=None, timeout_ms=None):
+        """Load, or with threshold_db (0-20) modify, the return loss in
+        dB below which the antenna check fails (command 0x6e; persists
+        across power-down). The factory default is 6 dB. Returns the
+        threshold the reader reports. Manual 8.4.16."""
+        if threshold_db is None:
+            value = 0x00
+        else:
+            if not (0 <= threshold_db <= 20):
+                raise ValueError("threshold_db must be 0-20")
+            value = 0x80 | threshold_db
+        data = self._call(_CMD_SET_ANTENNA_RETURN_LOSS, bytes([value]), timeout_ms)
+        return data[0] & 0x7F
 
     def set_max_epc_tid_length(self, *args, **kwargs):
         """Configure the max EPC/TID length used by the memory buffer.
@@ -1065,19 +1076,23 @@ class UHFReader:
         command 0x90."""
         self._not_implemented("set_drm_config", _CMD_SET_DRM_CONFIG)
 
-    def measure_antenna_return_loss(self, *args, **kwargs):
-        """Measure the current antenna return loss. Manual 8.4.37,
-        command 0x91."""
-        self._not_implemented(
-            "measure_antenna_return_loss", _CMD_MEASURE_ANTENNA_RETURN_LOSS
-        )
+    def measure_antenna_return_loss(self, freq_khz, antenna=0, timeout_ms=None):
+        """Measure the antenna's return loss in dB at freq_khz (command
+        0x91) - higher is a better match; the module wants 14 dB or
+        more. freq_khz must be a multiple of 100 or 125 kHz, and only
+        means something inside the module's band filter (902-928 or
+        865-868 MHz). NOTE: this transmits a carrier at freq_khz, so
+        only measure on frequencies you're allowed to transmit on.
+        Manual 8.4.37."""
+        field = bytes([(freq_khz >> 24) & 0xFF, (freq_khz >> 16) & 0xFF,
+                       (freq_khz >> 8) & 0xFF, freq_khz & 0xFF, antenna])
+        return self._call(_CMD_MEASURE_ANTENNA_RETURN_LOSS, field, timeout_ms)[0]
 
-    def measure_reader_temperature(self, *args, **kwargs):
-        """Measure the reader module's own internal temperature.
-        Manual 8.4.38, command 0x92."""
-        self._not_implemented(
-            "measure_reader_temperature", _CMD_MEASURE_READER_TEMPERATURE
-        )
+    def measure_reader_temperature(self, timeout_ms=None):
+        """The module's own temperature in degrees C (command 0x92), on
+        modules with a sensor. Manual 8.4.38."""
+        data = self._call(_CMD_MEASURE_READER_TEMPERATURE, b"", timeout_ms)
+        return data[1] if data[0] else -data[1]
 
     def stop_inventory(self):
         """Immediately stop an in-progress tag inventory (command 0x01)
